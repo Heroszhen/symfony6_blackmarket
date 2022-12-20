@@ -1,0 +1,204 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block body %}
+<style>
+   #allcategorys .onecategory.deactivated td{
+        background-color:gray;
+        color:#939393 !important;
+   }
+   #allcategorys #section-actions{
+        display:flex;
+        justify-content:space-between;
+   }
+   #allcategorys #section-actions input{
+        width:250px;
+   }
+   #allcategorys td .title{
+        cursor:pointer;
+   }
+   #allcategorys th{
+    text-align:left;
+   }
+</style>
+
+<div id="allcategorys" class="backmarket-admin" x-data="allcategorys" @click="reset(event)">
+    <div class="container-fluid" > 
+        <div class="row">
+            <h2 class="col-12 mb-3">Les catégories</h2>
+            <section class="col-12 text-end mb-2" id="section-actions">
+                <input class="form-control form-control-sm" type="text" @keyup="sortAllcategorys(event)">
+                <button type="button" class="btn btn-primary" @click="openModal()">Ajouter</button>
+            </section>
+            <seciton class="col-12">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Titre</th>
+                            <th scope="col">Statut</th>
+                            <th scope="col">Créée</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="(item, index) in allcategorys">
+                            <template x-if="item['filter']==''">
+                                <tr :class="{ 'deactivated': item['status']!=1 }" class="onecategory">
+                                    <td scope="row"><span x-text="item['id']"></span></td>
+                                    <td>
+                                        <span x-text="item['title']" class="title" @click="modifyCategory(event,index)" x-show="elmindex != index"></span>
+                                        <template class="wrap" x-if="elmindex == index && categoryM != null">
+                                            <input x-model="categoryM['title']" @click="event.stopPropagation()" @keyup="event.stopPropagation()" @focusout="editCategory(event)">
+                                        </template>
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" :id="'status_' + item['id']" :checked="item['status']==1" @change="switchCategoryStatus(event,index)">
+                                            <label class="form-check-label" :for="'status_' + item['id']"></label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span x-text="item['created']"></span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm"  @click="deleteCategory(index)">Supprimer</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary d-none" id="btn-modal" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+  Launch static backdrop modal
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" @click="event.stopPropagation()">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Créer une catégorie</h5>
+        <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <template x-if="categoryM !=null">
+            <form @submit="editCategory(event)">
+                <div class="mb-3">
+                    <label for="category-title" class="form-label">Titre</label>
+                    <input type="text" class="form-control form-control-sm" id="category-title" name="category-title" x-model="categoryM['title']">
+                </div>
+                <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="category-status" name="category-status" :checked="categoryM['status']==1" @change="switchCategoryMStatus(event)">
+                <label class="form-check-label" for="category-status">
+                    <span x-show="categoryM['status']==1" x-text="'Affiché'"></span>
+                    <span x-show="categoryM['status']==0" x-text="'Caché'"></span>
+                </label>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary" :disabled="categoryM['title']==''">Envoyer</button>
+                </div>
+            </form>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="{{ asset('script/Category.js') }}"></script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('allcategorys', () => ({
+            allcategorys: [],
+            elmindex:null,
+            categoryM: null,
+            init() {
+                this.allcategorys = {{ allcategorys| json_encode | raw }};
+            },
+            reset(e){
+                this.elmindex = null;
+                //this.categoryM = null;
+            },
+            sortAllcategorys(e){
+                for(let entry of this.allcategorys){
+                    if(entry['title'].toLowerCase().includes(e.target.value.toLowerCase()))entry['filter'] = "";
+                    else entry['filter'] = 'false';
+                    //console.log(entry['title'].toLowerCase().includes(e.target.value.toLowerCase()))
+                }
+            },
+            modifyCategory(e,index){
+                e.stopPropagation();
+                this.categoryM = new Category();
+                this.categoryM.set(this.allcategorys[index]);
+                this.elmindex = index;
+            },
+            editCategory(e=null){
+                if(e != null){
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                let index = this.elmindex
+                fetch("/admin/categorie/edit-category",{
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    method: 'post',
+                    body: JSON.stringify(this.categoryM)
+                })
+                .then(response => response.json())
+                .then(response =>{
+                    if(response['status'] == 1){
+                        let category = JSON.parse(response['data']);
+                        if(this.categoryM['id'] == null){
+                            this.allcategorys.unshift(category);
+                            document.querySelector('.btn-close-modal').click();
+                        }
+                        else this.allcategorys[index] = category;
+                    }
+                })
+                .catch(error => alert("Erreur : " + error));
+            },
+            switchCategoryStatus(e,index){
+                let id = this.allcategorys[index]["id"];
+                let status = (e.target.checked == true)?1:0;
+                this.allcategorys[index]["status"] = status;
+                fetch(`/admin/categorie/edit-categorystatus/${id}_${status}`,{
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    method: 'get'
+                })
+                .then(response => response.json())
+                .then(response =>{})
+                .catch(error => alert("Erreur : " + error));
+            },
+            openModal(){
+                this.categoryM = new Category();
+                document.getElementById("btn-modal").click();
+            },
+            switchCategoryMStatus(e){
+                this.categoryM['status'] = (e.target.checked == true)?1:0;
+            },
+            deleteCategory(index){
+                let id = this.allcategorys[index]['id'];
+                fetch(`/admin/categorie/deletecategory/${id}`,{
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    method: 'get'
+                })
+                .then(response =>response.json())
+                .then(json=>{
+                    if(json == 1)this.allcategorys.splice(index,1);
+                    if(json == 2){
+                        alert("Veuillez désassocier tous les produits de cette catégorie avant de la supprimer, svp");
+                    }
+                })
+                .catch(error => alert("Erreur : " + error));
+            }
+        }))
+    })
+</script>
+{% endblock %}

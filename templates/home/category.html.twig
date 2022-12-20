@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+    #category .list-products{
+        display:flex;
+        flex-wrap: wrap;
+    }
+    #category .oneproduct{
+        width:25%;
+        margin-bottom:20px;
+    }
+    #category .product-card{
+        display:block;
+        width:95%;
+        height:335px;
+        padding:20px;
+        border-radius:20px;
+        background-color:white;
+        transition-duration: 500ms;
+        margin:0 auto;
+    }
+    #category .product-card:hover{
+        box-shadow: 0px 4px 15px -3px gray;
+    }
+    #category .product-card .wrap-image{
+        height:75%;
+        overflow:hidden;
+    }
+    #category .product-card .wrap-image img{
+        width:100%;
+        height:auto;
+    }
+    #category .product-card .title{
+        font-weight:bold;
+    }
+    @media (max-width:991px) {
+        #category .oneproduct{
+            width:50%;
+        }
+    }
+</style>
+
+<div id="category" class="backmarket">
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <a href="/" class="link">Accueil</a>
+                <span class="ms-4 me-4">></span>
+                <span class="fw-bold">{{ category.title }}</span>
+            </div>
+            <div class="col-12 h1">{{ category.title }}</div>
+            <div class="col-12">
+                <div class="list-products">
+                    {% for key, item in category.getProducts()|reverse %}
+                        <div class="oneproduct" >
+                            <a class="product-card link" href="/produit/{{ item.uuid }}">
+                                <div class="wrap-image">
+                                    {% if item.getVariantproducts()|length > 0 %}
+                                        <img src="{{  asset('files/' ~ (item.getVariantproducts()[0].photos)[0]) }}" alt="">
+                                    {% endif %}
+                                </div>
+                                <div class="title">{{ item.title }}</div>
+                                <div class="price">{{ item.getVariantproducts()[0].price }} €</div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

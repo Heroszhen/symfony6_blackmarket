@@ -1,0 +1,167 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block body %}
+<style>
+    .bi-plus-circle:hover{
+        color:blue;
+    }
+    tr,td{
+            width:auto;
+    }
+</style>
+
+<div class="backmarket-admin" id="allproducts" x-data="allproducts">
+    <div class="container-fluid" > 
+        <div class="row">
+            <h2 class="col-12 mb-3">
+                Les produits
+                <span class="pointer fs-5" @click="openModal(1)"><i class="bi bi-plus-circle"></i></span>
+                <span class="d-none btn-modal2" @click="openModal(2)"></span>
+            </h2>
+            <seciton class="col-12">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Titre</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Créé</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key, item in allproducts %}
+                        <tr>
+                            <td scope="row" class="product-id">{{ item.id }}</td>
+                            <td class="product-title">{{ item.title }}</td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="status_{{ item.id }}" {% if item.status == 1 %}checked{% endif %} onchange="swichProductStatus(event,{{ item.id }})">
+                                    <label class="form-check-label" for="status_{{ item.id }}"></label>
+                                </div>
+                            </td>
+                            <td>{{ item.created|date('d/m/Y h:i:s') }}</td>
+                            <td>
+                                <a type="button" class="btn btn-info btn-sm text-white me-2" href="{{ path('admin_productinfo', {'id':item.id}) }}">Voir</a>
+                                <button type="button" class="btn btn-success btn-sm" onclick="modifyProduct(event)">Modifier</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+    <!-- Button trigger modal -->
+    <button type="button" class="d-none btn-modal" data-bs-toggle="modal" data-bs-target="#exampleModal" x-ref="btnModal">
+    Launch demo modal
+    </button>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Editer un produit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <template x-if="productM != null">
+                        <form @submit.prevent="editProduct(event)">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Titre</label>
+                                <input type="text" class="form-control form-control-sm" id="title" name="title" x-model="productM['title']">
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control form-control-sm" id="description" name="description" rows="2" x-model="productM['description']"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="releasedate" class="form-label">Date de sortie</label>
+                                <input type="date" class="form-control form-control-sm" id="releasedate" name="releasedate" x-model="productM['releasedate']">
+                            </div>
+                            <div class="text-center">
+                                <button type="submite" class="btn btn-primary btn-sm">Envoyer</button>
+                            </div>
+                        </form>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
+<script>
+    $(document).ready(function () {
+        $('#allproducts table').DataTable({
+            "pageLength": 10,
+            order: [[0, 'desc']]
+        });
+    });
+</script>
+<script>
+    let productDom = null;
+
+    async function swichProductStatus(e, id){
+        let status = (e.target.checked == true)?1:0;
+        let response = await fetchGet(`/admin/produit/switchproductstatus/${id}_${status}`);
+        if(response == 1)openSnackbar("Enregistré",1);
+        else openSnackbar("Erreur",1);
+        
+    }
+
+    function modifyProduct(e){
+        productDom = e.target.parentElement.parentElement;
+        document.querySelector(".btn-modal2").click();
+    }
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('allproducts', () => ({
+            action:0,
+            productM:null,
+            productM2:null,
+            init(){
+                this.productM2 = {{ product|json_encode|raw }};
+            },
+            async openModal(action=0){
+                this.action = action;
+                this.productM = clone(this.productM2);
+                if(action == 1){
+                    this.$refs.btnModal.click();
+                }
+                if(action == 2){
+                    let id = productDom.querySelector(".product-id").textContent.trim();
+                    let response = await fetchGet("/admin/produit/getproduct/" + id);
+                    if(response["status"] == 1){
+                        this.productM = JSON.parse(response['data']);
+                        let releasedate = this.productM['releasedate'];
+                        if(releasedate != null){
+                            let tab = releasedate.split("T");
+                            this.productM['releasedate'] = tab[0];
+                        }
+                        this.$refs.btnModal.click();
+                    }
+                }
+            },
+            async editProduct(e){
+                let response = await fetchPost("/admin/produit/editproduct",this.productM);
+                if(response['status'] == 1){
+                    if(this.action == 1)location. reload();
+                    if(this.action == 2){
+                        productDom.querySelector(".product-title").textContent = this.productM["title"];
+                        openSnackbar("Enregistré",1);
+                    }
+                }
+            },
+           
+        }))
+    })
+</script>
+{% endblock %}

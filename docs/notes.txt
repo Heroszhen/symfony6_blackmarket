@@ -1,0 +1,14 @@
+php bin/console doctrine:database:create
+php bin/console doctrine:schema:update --force
+
+composer dump-autoload
+
+---HttpFoundation\Request
+$request->request => $_POST (form / FormData)
+$request->query => $_GET
+$request->files => $_FILES (form / FormData)
+
+xmlhttprequest : 
+$request->getContent() -> $data=json_decode($request->getContent(),true)
+
+?$request->toArray();

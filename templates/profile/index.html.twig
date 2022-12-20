@@ -1,0 +1,164 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+    #profile-me .onecard{
+        padding:20px;
+        background-color:white;
+        display:flex;
+        border-radius: 0.6rem;
+        box-shadow:0 0.2rem 0.4rem rgba(0, 0, 0, 0.05);
+        min-height:148px;
+    }
+    #profile-me .onecard>section:nth-child(1){
+        width:calc(100% - 40px);
+    }
+    #profile-me .onecard>section:nth-child(2){
+        display:flex;
+        align-items:center;
+        width:40px;
+    }
+    #profile-me .onecard .wrap-pen{
+        font-size:20px;
+        cursor:pointer;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        width:40px;
+        height:40px;
+        border-radius:50%;
+    }
+    #profile-me .onecard .wrap-pen:hover{
+        background:gainsboro;
+    }
+</style>
+
+<div id="profile-me" class="backmarket">
+    <div class="h1 text-center">Mon profil</div>
+    <div class="container">
+        <section class="row pt-5 {% if msgalert != '' %}d-none{% endif %}" id="s1"> 
+            <div class="col-md-6 mb-3">
+                <div class="onecard">
+                    <section>
+                        <h3>Infos perso</h3>
+                        <div id="info-name">{{ app.user.getFirstname() }} {{ app.user.getLastname() }}</div>
+                        <div id="info-email mb-3">{{ app.user.getEmail() }}</div>
+                        <span class="fs-5 text-decoration-underline pointer">Modifier le mot de passe</span>
+                    </section>
+                    <section>
+                        <div class="wrap-pen" onclick="switchS2(1)">
+                            <i class="bi bi-pencil"></i>
+                        </div> 
+                    </section>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="onecard">
+                    <section>
+                        <h3>Adresse de facturation</h3>
+                    </section>
+                    <section>
+                        <div class="wrap-pen">
+                            <i class="bi bi-pencil"></i>
+                        </div> 
+                    </section>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="onecard">
+                    <section>
+                        <h3>Adresse de livraison</h3>
+                    </section>
+                    <section>
+                        <div class="wrap-pen">
+                            <i class="bi bi-pencil"></i>
+                        </div> 
+                    </section>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="onecard onecard2">
+                    <section>
+                        <h3>Mes préférences, à moi </h3>
+                    </section>
+                </div>
+            </div>
+        </section>
+        <section class="row pt-5 justify-content-center {% if msgalert == '' %}d-none{% endif %}" id="s2">
+            <div class="col-md-7 col-lg-5">
+                <div class="mb-3">
+                    <span class="pointer" onclick="switchS2(0)"><i class="bi bi-arrow-left fs-5"></i> Retour</span>
+                </div>
+                {% if msgalert is defined and msgalert != "" %}
+                    <div class="alert {% if status == 1 %}alert-success{% else %}alert-danger{% endif %}">{{ msgalert }}</div>
+                {% endif %}
+                {{ form(form) }}
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Button trigger modal -->
+<button type="button" class="d-none" id="profile-me-btn-modal-close" data-bs-toggle="modal" data-bs-target="#profile-me-exampleModal">
+  Launch demo modal
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="profile-me-exampleModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="profile-me-exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profile-me-exampleModalLabel">Modal title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
+<script>
+    let btnModal = document.getElementById("profile-me-btn-modal-close");
+    let titlelabelModal = document.getElementById("profile-me-exampleModalLabel");
+    let bodyModal = document.querySelector('.modal .modal-body');
+    
+    function switchS2(action){
+        if(action == 1){//open
+            document.getElementById("s1").classList.add("d-none");
+            document.getElementById("s2").classList.remove("d-none");
+        }
+        if(action == 0){//close
+            document.getElementById("s1").classList.remove("d-none");
+            document.getElementById("s2").classList.add("d-none");
+        }
+        
+    }
+
+    /*
+    function getUserForm(){
+        $.get(
+           "/profil/modifymyprofile",
+           (response) => {
+               bodyModal.innerHTML = response;
+               btnModal.click();
+           }
+       );
+    }
+
+    $("#profile-me-exampleModal .modal-body").on("submit","form[name='user']",function (e){
+        e.preventDefault();
+        let formSerialize = $(this).serialize();
+        $.post(
+            "/profil/modifymyprofile",
+            formSerialize,
+            (response)=>{
+               bodyModal.innerHTML = response;
+            }
+        );
+    })*/
+</script>
+{% endblock %}

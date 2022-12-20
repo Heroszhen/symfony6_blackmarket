@@ -1,0 +1,133 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+    #home #carouselExampleControls{
+        padding-left:40px;
+        padding-right:40px;
+    }
+    #home #carouselExampleControls img{
+        border-radius:20px;
+    }
+    #home #list-categorys{
+        padding-left:100px;
+        padding-right:100px;
+    }
+    #home .onecategory{
+        margin-bottom:60px;
+    }
+    #home .list-products{
+        display:flex;
+        flex-wrap: wrap;
+    }
+    #home .oneproduct{
+        width:25%;
+        margin-bottom:20px;
+    }
+    #home .product-card{
+        display:block;
+        width:95%;
+        height:335px;
+        padding:20px;
+        border-radius:20px;
+        background-color:white;
+        transition-duration: 500ms;
+        margin:0 auto;
+    }
+    #home .product-card:hover{
+        box-shadow: 0px 4px 15px -3px gray;
+    }
+    #home .product-card .wrap-image{
+        height:75%;
+        overflow:hidden;
+    }
+    #home .product-card .wrap-image img{
+        width:100%;
+        height:auto;
+    }
+    #home .product-card .title{
+        font-weight:bold;
+    }
+    @media (max-width:991px) {
+        #home #list-categorys{
+            padding-left:50px;
+            padding-right:50px;
+        }
+        #home .oneproduct{
+            width:50%;
+        }
+    }
+    @media (max-width:767px) {
+        #home #list-categorys{
+            padding-left:5px;
+            padding-right:5px;
+        }
+        #home #carouselExampleControls{
+            padding-left:0;
+            padding-right:0;
+        }
+    }
+</style>
+
+<div id="home" class="backmarket">
+    <div class="container-fluid mb-5">
+        <section class="row">
+            <div class="col-12 pt-5">
+                <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                        <img src="{{  asset('files/fixtures6.png') }}" class="d-block w-100" alt="...">
+                        </div>
+                        <div class="carousel-item">
+                        <img src="{{  asset('files/fixtures7.png') }}" class="d-block w-100" alt="...">
+                        </div>
+                        <div class="carousel-item">
+                        <img src="{{  asset('files/fixtures8.png') }}" class="d-block w-100" alt="...">
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12" id="list-categorys">
+                {% for key, item in allcategorys %}
+                    <section class="onecategory">
+                        <div class="title h4 mb-4">
+                            <a class="link" href="{{ path('app_category',{'uuid':item.uuid}) }}">{{ item.title }}<i class="bi bi-chevron-double-right ms-2 text-secondary"></i></a>
+                        </div>
+                        <div class="list-products">
+                            {% set break = false %}
+                            {% for key2, item2 in item.getProducts()|reverse %}
+                                {% if break == false %}
+                                <div class="oneproduct" >
+                                    <a class="product-card link" href="/produit/{{ item2.uuid }}">
+                                        <div class="wrap-image">
+                                            {% if item2.getVariantproducts()|length > 0 %}
+                                                <img src="{{  asset('files/' ~ (item2.getVariantproducts()[0].photos)[0]) }}" alt="">
+                                            {% endif %}
+                                        </div>
+                                        <div class="title">{{ item2.title }}</div>
+                                        <div class="price">{{ item2.getVariantproducts()[0].price }} €</div>
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% if key2 >= 3 %}{% set break = true %}{% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

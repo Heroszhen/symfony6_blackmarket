@@ -1,0 +1,48 @@
+<nav id="mainnav">
+    <div class="part1">
+        <div class="btn-leftmenu">
+            <i class="bi bi-justify" onclick="switchLeftmenu(1)"></i>
+            <i class="bi bi-x" onclick="switchLeftmenu(0)"></i>
+        </div>
+        <div class="title">
+            <a href="/" class="link text-white">Back Market</a>
+        </div>
+        <div class="onelink"><a href="/" class="link text-white">Qui sommes nous</a></div>
+        <div class="onelink"><a href="/" class="link text-white">Revendre</a></div>
+        <div class="onelink"><a href="/" class="link text-white">Aide</a></div>
+        <div class="wrap-connexion">
+            {% if app.user == null %}
+                <a href="/connexion" class="link text-white"><i class="bi bi-person"></i></a>
+            {% else %}
+            <div class="dropdown">
+                <div  type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="{{  asset('files/' ~ app.user.getPhoto()) }}" alt="">
+                </div>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    {% if "ROLE_ADMIN" in app.user.getRoles() %}
+                        <li><a class="dropdown-item" href="{{ path('admin_allusers') }}">Admin</a></li>
+                    {% endif %}
+                    <li><a class="dropdown-item" href="{{ path('profile_me') }}">Mon Compte</a></li>
+                    <li><a class="dropdown-item" href="/">Mes commandes</a></li>
+                    <li><a class="dropdown-item" href="/deconnexion">Se déconnecter</a></li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="wrap-form">
+            <form class="fullwidth" method="post" action="{{ path('app_searchbykeywords') }}">
+                <div class="wrap-search-input">
+                    <input name="keywords" class="noborder bg-white" placeholder="Essayer">
+                    <i class="bi bi-x-lg text-black me-3"></i>
+                    <button><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="part2">
+        <div class="btn-leftmenu">
+            <i class="bi bi-justify" onclick="switchLeftmenu(1)"></i>
+            <i class="bi bi-x" onclick="switchLeftmenu(0)"></i>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+    #product #wrap-photos{
+        display:flex;
+        justify-content: space-between;
+    }
+    #product #wrap-photos>section:nth-child(1){
+        width:38px;
+    }
+    #product #wrap-photos>section:nth-child(2){
+        width:calc(100% - 100px);
+    }
+    #product #wrap-photos>section:nth-child(1) img{
+        border:1px solid gainsboro;
+        border-radius:5px;
+        margin-bottom:5px;
+        cursor:pointer;
+    }
+</style>
+
+<div id="product" class="backmarket" x-data="oneproduct">
+    <template x-if="product != null">
+        <div class="container mt-3">
+            <div class="col-12 mb-3">
+                <a href="/" class="link">Accueil</a>
+                <span class="ms-4 me-4">></span>
+                <span class="fw-bold" x-text="product.title"></span>
+            </div>
+            <div class="col-12" >
+                <div class="row">
+                    <div class="col-md-6 mb-5">
+                        <template x-if="vproduct != null && photoindex != null">
+                            <div id="wrap-photos">
+                                <section>
+                                    <template x-for="(item, index) in vproduct['photos']">
+                                        <img :src="location.origin + '/files/' + item" alt="" :class="{'border border-dark':photoindex==index}" @click="setPhotoindex(index)">
+                                    </template>
+                                </section>
+                                <section>
+                                    <img :src="location.origin + '/files/' + vproduct['photos'][photoindex]" alt="">
+                                </section>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="col-md-6">
+                        <template x-if="vproduct != null">
+                            <section class="wrap">
+                                <span class="h3" x-text="vproduct['price']"></span> €
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-dark">Ajouter au panier</button>
+                                </div>
+                            </section>
+                        </template>
+                        <template x-if="product != null">
+                            <section>
+                            </section>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('oneproduct', () => ({
+            product:null,
+            allvproducts:[],
+            valueschosen:[],//[variant_id,value_id]
+            vproduct:null,
+            photoindex:null,
+            init(){
+                this.product = {{ product|json_encode|raw }};console.log(this.product)
+                this.allvproducts = {{ allvproducts|json_encode|raw }};
+                if(this.allvproducts.length > 0){
+                    this.vproduct = clone(this.allvproducts[0]);console.log(this.vproduct)
+                    this.photoindex = 0;
+                    for(let entry of this.vproduct['variantvalues'])this.valueschosen.push([entry['variant']['id'],entry['id']]);
+                }
+            },
+            setPhotoindex(index){
+                this.photoindex = index;
+            }
+        }))
+    })
+</script>
+{% endblock %}

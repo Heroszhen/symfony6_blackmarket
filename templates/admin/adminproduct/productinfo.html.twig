@@ -1,0 +1,467 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block body %}
+<style>
+    section.onevariation{
+        padding-left:20px;
+        margin-bottom:20px;
+    }
+    section.onevariation .wrap{
+        padding-left:40px;
+        display:flex;
+        
+    }
+    section.onevariation .wrap>div{
+        margin-right:15px;
+        padding:3px 10px;
+        border:1px solid black;
+        border-radius:10px;
+        cursor:pointer;
+    }
+    section.onevariation .wrap>div:hover,
+    .modal .onevariation .wrap>div.chosen{
+        background-color:gray;
+        color:white;
+        border-color:gray;
+    }
+    .modifying{
+        color:red;
+        font-weight:bold;
+    }
+    section#section-variantproducts table img{
+        width:100px;
+    }
+    section#section-variantproducts table tr.modifying{
+        background-color:red;
+    }
+    form#form-variantproduct .list-photos{
+        display:flex;
+        flex-wrap: wrap;
+    }
+    form#form-variantproduct .wrap-image{
+        width:calc(100% / 3);
+        margin-bottom:10px;
+        position:relative;
+        padding:2px 5px;
+    }
+    form#form-variantproduct .wrap-icon{
+        position:absolute;
+        top:-10px;
+        font-size:20px;
+        right:5px;
+    }
+</style>
+
+<div class="backmarket-admin" id="productinfo" x-data="productinfo">
+    <div class="container" > 
+        <div class="row">
+            <h2 class="col-12 mb-3">
+                Produit n°{{ product.id }} : {{ product.title }}
+                <span class="pointer fs-5 ms-2 me-2" x-show="productForm==true" @click="productForm=false"><i class="bi bi-caret-down-fill"></i></span>
+                <span class="pointer fs-5 ms-2 me-2" x-show="productForm==false" @click="productForm=true"><i class="bi bi-caret-up-fill"></i></span>
+            </h2>
+        </div>
+        <section class="row justify-content-center" style="margin-bottom:60px" x-show="productForm==true">
+            <div class="col-md-10 col-lg-7">
+                <template x-if="productM != null">
+                    <form class="row" @submit.prevent="editProduct(event)">
+                        <div class="mb-3 col-md-6">
+                            <label for="title" class="form-label">Titre</label>
+                            <input type="text" class="form-control form-control-sm" id="title" name="title" x-model="productM['title']">
+                        </div>
+                        <div class="mb-3 col-md-6">
+                            <label for="releasedate" class="form-label">Date de sortie</label>
+                            <input type="date" class="form-control form-control-sm" id="releasedate" name="releasedate" x-model="productM['releasedate']">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control form-control-sm" id="description" name="description" rows="2" x-model="productM['description']"></textarea>
+                        </div>
+                        <div class="text-center col-12">
+                            <button type="submite" class="btn btn-primary">Envoyer</button>
+                        </div>
+                    </form>
+                </template>
+            </div>
+        </section>
+        <section class="row">
+            <h3 class="col-12">
+                Les variations
+                <span class="pointer fs-5" @click="setAction(1)"><i class="bi bi-plus-circle"></i></span>
+            </h3>
+            <div class="col-md-8 mb-4" :class="{'col-md-12':action==null}">
+                <section>
+                    <template x-for="(item, index) in allvariants">
+                        <section class="onevariation">
+                            <h5>
+                                <span x-text="item['title']" :class="{'modifying':action == 1 && elmindex == index && elmindex2==null}"></span>
+                                <span class="pointer fs-6 ms-2 me-2" @click="setAction(1,index)"><i class="bi bi-pencil-square"></i></span>
+                                <span class="pointer fs-6" @click="setAction(2,index)"><i class="bi bi-plus-circle"></i></span>
+                            </h5>
+                            <div class="wrap">
+                                <template x-for="(item2, index2) in item['variantvalues']">
+                                    <div class="onevariationvalue" @click="setAction(2,index,index2)">
+                                        <span x-text="item2['title']" :class="{'modifying':action == 2 && elmindex == index && elmindex2==index2}"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </section>
+                    </template>
+                </section>
+                <section class="mt-5" id="section-variantproducts">
+                    <h3>
+                        Les produits(variants)
+                        <span class="pointer fs-5" @click="setAction(3)"><i class="bi bi-plus-circle"></i></span>
+                    </h3>
+                    <div>
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Id</th>
+                                    <th scope="col">Prix</th>
+                                    <th scope="col">Statut</th>
+                                    <th scope="col">Photos</th>
+                                    <th scope="col">Créé</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(item, index) in allvariantproducts">
+                                    <tr :class="{'modifying':action==3 && elmindex==index}">
+                                        <th scope="row"><span x-text="item['id']"></span></th>
+                                        <td><span x-text="item['price']"></span></td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" :id="'status' + item.id" :checked="item.status==1" @change.prevent="switchVariantproductStatus(event,index)">
+                                                <label class="form-check-label" :for="'status' + item.id"></label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <template x-if="item['photos'].length>0">
+                                                <img :src="location.origin + '/files/' + item['photos'][0]">
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <span x-text="item.created"></span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-info btn-sm text-white" @click="setAction(3,index)"><i class="bi bi-pencil-square"></i></button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            <div class="col-md-4" style="border-left:1px solid black;" x-show="action != null">
+                <div class="wrap-delete-icon">
+                    <i class="bi bi-x-circle" @click="setAction()"></i>
+                </div>
+                <template x-if="action==1 && variantM != null">
+                    <div>
+                        <h5>Editer une variation</h5>
+                        <form @submit.prevent="editVariation(event)">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Titre</label>
+                                <input type="text" class="form-control form-control-sm" id="title" name="title" x-model="variantM['title']">
+                            </div>
+                            <div>
+                                <button type="submite" class="btn btn-primary btn-sm">Envoyer</button>
+                            </div>
+                        </form>
+                    </div>
+                </template>
+                <template x-if="action==2 && valueM != null">
+                    <div>
+                        <h5>Editer une value d'une variation</h5>
+                        <form @submit.prevent="editVariationvalue(event)">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Titre</label>
+                                <input type="text" class="form-control form-control-sm" id="title" name="title" x-model="valueM['title']">
+                            </div>
+                            <div>
+                                <button type="submite" class="btn btn-primary btn-sm">Envoyer</button>
+                            </div>
+                        </form>
+                    </div>
+                </template>
+                <template x-if="action==3">
+                    <div>
+                        <h5>Editer un produit(variant)</h5>
+                        <section class="list-values">
+                            <template x-if="elmindex == null">
+                                <template x-for="(item, index) in valueschosen">
+                                    <div class="mb-2">
+                                        <div><span x-text="allvariants[item[0]]['title']"></span></div>
+                                        <div class="ps-2"><span x-text="item[1]['title']"></span></div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template x-if="elmindex != null">
+                                <template x-for="(item, index) in allvariantproducts[elmindex]['variantvalues']">
+                                    <div class="mb-2">
+                                        <div><span x-text="item['variant']['title']"></span></div>
+                                        <div class="ps-2"><span x-text="item['title']"></span></div>
+                                    </div>
+                                </template>
+                            </template>
+                        </section>
+                        <section>
+                            <template x-if="variantproductM != null">
+                                <form  @submit.prevent="editVariantproduct(event)" class="mt-3" id="form-variantproduct">
+                                    <div class="mb-3">
+                                        <label for="price" class="form-label">Prix</label>
+                                        <input type="text" class="form-control form-control-sm" id="price" name="price" x-model="variantproductM['price']">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="photos" class="form-label">Photos</label>
+                                        <input class="form-control" type="file" id="photos" name="photos" @change="handleFile(event)">
+                                        <section class="list-photos oldphotos mt-2">
+                                            <template x-for="(item, index) in variantproductM['photos']">
+                                                <div class="wrap-image">
+                                                    <img :src="location.origin + '/files/' + item" alt="">
+                                                    <div class="wrap-icon">
+                                                        <i class="bi bi-x-circle pointer text-danger" @click.prevent="deleteVariantproductPhoto(event,1,index)"></i>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </section>
+                                        <section class="list-photos newphotos mt-2">
+                                            <template x-for="(item, index) in files">
+                                                <div class="wrap-image">
+                                                    <img :src="item[1]" alt="">
+                                                    <div class="wrap-icon">
+                                                        <i class="bi bi-x-circle pointer text-danger" @click.prevent="deleteVariantproductPhoto(event,2,index)"></i>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </section>
+                                    </div>
+                                    <div>
+                                        <button type="submite" class="btn btn-primary btn-sm">Envoyer</button>
+                                    </div>
+                                </form>
+                            </template>
+                        </section>
+                    </div>
+                </template>
+            </div>
+        </section>
+    </div>
+
+
+    <!-- Button trigger modal -->
+    <button type="button" class="d-none" id="btn-modal" data-bs-toggle="modal" data-bs-target="#exampleModal" x-ref="btnModal"></button>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Choisir des variations</h5>
+                    <button type="button" class="btn-close" x-ref="btnModal2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <template x-if="action==3">
+                    <div class="modal-body">
+                        <section>
+                            <template x-for="(item, index) in allvariants">
+                                <section class="onevariation">
+                                    <h5>
+                                        <span x-text="item['title']"></span> 
+                                    </h5>
+                                    <div class="wrap">
+                                        <template x-for="(item2, index2) in item['variantvalues']">
+                                            <div class="onevariationvalue" @click="chooseValue(index,index2)" :class="{'chosen':inValueschosen(index,index2)==true}">
+                                                <span x-text="item2['title']"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </section>
+                            </template>
+                        </section>
+                        <section class="text-center mt-4">
+                            <button type="button" class="btn btn-primary" @click="validateValueschosen()">Choisir</button>
+                        </section>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+    
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('productinfo', () => ({
+            productM:null,
+            productForm:false,
+            allvariants: [],
+            elmindex: null,
+            elmindex2: null,
+            action:null,//1-variation, 2-variationvalue, 3variationproduct
+            variantM:null,
+            valueM:null,
+            valueschosen:[],
+            allvariantproducts: [],//[[variantindex,value]]
+            variantproductM:null,
+            variantproductM2:null,
+            files:[],
+            init(){
+                let product = {{ productM|json_encode|raw }};
+                if(product["releasedate"] != null){
+                    product["releasedate"] = (product["releasedate"].split("T"))[0];
+                }
+                this.productM = product;
+                this.allvariants = {{ allvariants|json_encode|raw }};
+                this.allvariantproducts = {{ allvariantproducts|json_encode|raw }};
+                this.variantproductM2 = {{ variantproductM|json_encode|raw }};console.log(this.allvariantproducts,this.variantproductM2);
+            },
+            async editProduct(e){
+                let response = await fetchPost("/admin/produit/editproduct",this.productM);
+                if(response['status'] == 1)openSnackbar("Enregistré",1);
+            },
+            async setAction(action = null,elmindex = null,elmindex2 = null){
+                this.elmindex = elmindex;
+                this.elmindex2 = elmindex2;
+                this.variantproductM = null;
+                this.action = null;
+                if(action == 1){
+                    this.variantM = {
+                        id :null,
+                        title:"",
+                        product : {id:this.productM["id"]}
+                    }
+                    if(elmindex != null)this.variantM = clone(this.allvariants[elmindex]);
+                }
+                if(action == 2){
+                    this.valueM = {
+                        id :null,
+                        title:"",
+                        variant: {id:this.allvariants[elmindex]["id"]}
+                    }
+                    if(elmindex != null && elmindex2 != null)this.valueM = clone(this.allvariants[elmindex]['variantvalues'][elmindex2]);
+                }
+                if(action == 3){
+                    this.valueschosen = [];
+                    this.files = [];
+                    this.variantproductM = clone(this.variantproductM2);
+                    if(elmindex == null)this.openModal();
+                    else this.variantproductM = clone(this.allvariantproducts[elmindex]);
+                }
+                
+                this.action = action;
+            },
+            async editVariation(e){
+                let response = await fetchPost("/admin/produit/editvariation",this.variantM);
+                if(response["status"] == 1){
+                    if(this.variantM["id"] == null){
+                        this.allvariants.push(response["data"]);
+                        this.setAction();
+                    }else{
+                        this.allvariants[this.elmindex] = response["data"]; 
+                    }
+                    openSnackbar("Enregistré",1); 
+                }
+            },
+            async editVariationvalue(e){
+                let response = await fetchPost("/admin/produit/editvariationvalue",this.valueM);
+                if(response["status"] == 1){
+                    if(this.valueM["id"] == null){
+                        this.allvariants[this.elmindex]['variantvalues'].push(response["data"]);
+                        this.setAction();
+                    }else{
+                        this.allvariants[this.elmindex]['variantvalues'][this.elmindex2] = response["data"]; 
+                    }
+                    this.files = [];
+                    openSnackbar("Enregistré",1); 
+                }
+            },
+            openModal(){
+                this.$refs.btnModal.click();
+            },
+            chooseValue(index,index2){
+                let id1 = this.allvariants[index]["id"];
+                let id2 = this.allvariants[index]['variantvalues'][index2]["id"];
+                for(let i in this.valueschosen){
+                    if(this.valueschosen[Number(i)][0] == index){
+                        if(this.valueschosen[Number(i)][1]['id'] == id2)this.valueschosen.splice(Number(i),1);
+                        else this.valueschosen[Number(i)] = this.allvariants[index]['variantvalues'][index2];
+                        return
+                    }
+                }
+                this.valueschosen.push([index,this.allvariants[index]['variantvalues'][index2]]);
+            },
+            inValueschosen(index,index2){
+                let id1 = this.allvariants[index]["id"];
+                let id2 = this.allvariants[index]['variantvalues'][index2]["id"];
+                for(let entry of this.valueschosen){
+                    if(entry[0] == index && entry[1]["id"] == id2)return true;
+                }
+                return false;
+            },
+            validateValueschosen(){
+                if(this.valueschosen.length == 0)return false;
+                else{
+                    this.$refs.btnModal2.click();
+                }
+            },
+            async handleFile(e){
+                let file = e.target.files.item(0);
+                let base64 = await readFile(file);
+                this.files.push([file,base64]);
+            },
+            async deleteVariantproductPhoto(e,action,index){//action:1-old photos, 2-new photos
+                if(action == 1){
+                    this.variantproductM['photos'].splice(index,1);
+                    this.allvariantproducts[this.elmindex]['photos'].splice(index,1);
+                    let response = await fetchGet(`/admin/produit/deletevariantproductphoto/${this.variantproductM['id']}_${index}`);
+                    if(response["status"] == 1)openSnackbar("Enregistré",1);
+                }
+                if(action == 2){
+                    this.files.splice(index,1);
+                }
+            },
+            async editVariantproduct(e){
+                let formd = new FormData();
+                formd.append("id",String(this.variantproductM['id']));
+                formd.append('productid',String(this.productM['id']));
+                formd.append("price",this.variantproductM['price']);
+                formd.append("files_length",String(this.files.length));
+                let i = 0;
+                if(this.variantproductM['id'] == null){
+                    formd.append("values_length",String(this.valueschosen.length));
+                    for(let tab of this.valueschosen){
+                        formd.append(`value_${i}`, String(tab[1]["id"]));
+                        i++;
+                    }
+                }
+                i = 0;
+                for(let tab of this.files){
+                    formd.append(`file_${i}`,tab[0]);
+                    i++;
+                }
+                let response = await fetchPost("/admin/produit/editvariantproduct",formd);
+                if(response["status"] == 1){
+                    let vp = JSON.parse(response["data"]);
+                    if(this.variantproductM['id'] == null){
+                        this.allvariantproducts.push(vp);
+                        this.setAction();
+                    }else{
+                        this.allvariantproducts[this.elmindex] = vp;
+                        this.variantproductM = clone(vp);
+                    }
+                    openSnackbar("Enregistré");
+                }
+            },
+            async switchVariantproductStatus(e,index){
+                let status = (e.target.checked == true)?1:0;
+                let id = this.allvariantproducts[index]["id"];
+                let response = await fetchGet(`/admin/produit/switchvariantproductstatus/${id}_${status}`);
+                if(response == 1)openSnackbar("Enregistré");
+            }
+        }))
+    })
+</script>
+{% endblock %}

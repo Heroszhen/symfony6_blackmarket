@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+    .list-products{
+        display:flex;
+        flex-wrap: wrap;
+    }
+    .oneproduct{
+        width:33.3333%;
+        margin-bottom:20px;
+    }
+    .product-card{
+        display:block;
+        width:95%;
+        height:335px;
+        padding:20px;
+        border-radius:20px;
+        background-color:white;
+        transition-duration: 500ms;
+        margin:0 auto;
+    }
+    .product-card:hover{
+        box-shadow: 0px 4px 15px -3px gray;
+    }
+    .product-card .wrap-image{
+        height:75%;
+        overflow:hidden;
+    }
+    .product-card .wrap-image img{
+        width:100%;
+        height:auto;
+    }
+    .product-card .title{
+        font-weight:bold;
+    }
+    @media (max-width:991px) {
+        
+        .oneproduct{
+            width:50%;
+        }
+    }
+</style>
+
+<div id="search" class="backmarket">
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col-12 h1 mb-5">
+                Votre recherche : {{ keywords }}
+            </div>
+        </div>
+        <div class="row">
+            <section class="col-md-3 d-none d-md-block">
+                <h5>Catégories<h5>
+                <div class="wrap">
+                    {% for key, item in allcategorys %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input input_category" type="checkbox" id="flexcheck_{{ key }}" data-title="{{ item.title }}" {% if item.id in ids %}checked{% endif %}>
+                            <label class="form-check-label" for="flexcheck_{{ key }}">{{ item.title }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+            <section class="col-md-9" id="col-products">
+                <h3 class="mb-3">{{ allproducts|length }} produits trouvés</h3>
+                <div class="list-products">
+                    {% for key, item in allproducts %}
+                        <div class="oneproduct" >
+                            <a class="product-card link" href="{{ path('app_product', {'uuid':item.uuid}) }}">
+                                <div class="wrap-image">
+                                    {% if item.getVariantproducts()|length > 0 %}
+                                        <img src="{{  asset('files/' ~ (item.getVariantproducts()[0].photos)[0]) }}" alt="">
+                                    {% endif %}
+                                </div>
+                                <div class="title">{{ item.title }}</div>
+                                <div class="price">{{ item.getVariantproducts()[0].price }} €</div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+    let keywords = '{{ keywords }}';
+    let store = {{ store|json_encode|raw }};//stock dom, [index , title]
+    let allcategorys = document.querySelectorAll(".input_category");
+    allcategorys.forEach((dom,index)=>{
+        dom.addEventListener("change",(e)=>{
+            let existed = false;
+            for(let i in store){
+                if(store[Number(i)][0] == index){
+                    existed = true;
+                    store.splice(Number(i),1);
+                    break;
+                }
+            }
+            if(existed == false)store.push([index,dom.getAttribute('data-title')]);
+            let href = `/rechercher?q=${keywords}`;
+            if(store.length > 0)href += "&categorys=";
+            for(let i in store){
+                href += store[Number(i)][1];
+                if(i < store.length - 1)href += "_";
+            }
+            location.href = href;
+        })
+    })
+</script>
+{% endblock %}
+
