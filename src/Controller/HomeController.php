@@ -13,13 +13,14 @@ use App\Entity\Variantproduct;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Service\UtilService;
 
+#[Route('%prefix%/aaa')]
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_home')]
     public function index(Request $request, ManagerRegistry $doctrine): Response
     {
         $em = $doctrine->getManager();
-
+dump($_ENV['URL']);
         $session = $request->getSession();
         $session->set("page",['general','home']);
 
@@ -45,7 +46,7 @@ class HomeController extends AbstractController
 
     #[Route('/searchbykeywords', name: 'app_searchbykeywords', methods: ['POST'])]
     public function searchByKeywords(Request $request){
-        return $this->redirect("/rechercher?q={$request->request->get('keywords')}");
+        return $this->redirectToRoute('app_search', ['q', $request->request->get('keywords')]);
     }
     #[Route('/rechercher', name: 'app_search', methods: ['GET'])]
     public function search(Request $request, ManagerRegistry $doctrine){
