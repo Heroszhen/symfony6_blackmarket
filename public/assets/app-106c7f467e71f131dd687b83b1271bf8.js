@@ -1,1 +1,0 @@
-console.log("from assets/app.js with AssetMapper")
