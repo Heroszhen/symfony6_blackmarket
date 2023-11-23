@@ -13,7 +13,7 @@ use App\Entity\Variantproduct;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Service\UtilService;
 
-#[Route('%prefix%/aaa')]
+//#[Route('%prefix%/aaa')]
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_home')]
